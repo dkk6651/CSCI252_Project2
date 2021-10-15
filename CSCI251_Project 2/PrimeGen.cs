@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
@@ -16,6 +18,11 @@ namespace CSCI251_Project_2
         static void Main(string[] args)
         {
             int bit = 0;
+            int count;
+            List<Task<BigInteger>> tasks = new List<Task<BigInteger>>();
+            List<BigInteger> result = new List<BigInteger>();
+            Stopwatch sw = new Stopwatch();
+            
             try
             {
                 bit = Convert.ToInt32(args[0]);
@@ -29,17 +36,61 @@ namespace CSCI251_Project_2
                 Console.WriteLine("Invalid Bit Input");
             }
 
-            RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+            try
+            {
+                count = Convert.ToInt32(args[1]);
+            }
+            catch (IndexOutOfRangeException e)
+            {
+                count = 1;
+            }
+
+            sw.Start();
+            for (int i = 0; i < count; i++)
+            {
+                Task<BigInteger> t = GenerateRandomInt(bit);
+                tasks.Add(t);
+            }
             
-            rng.GetBytes(new byte[bit/8]);
+            int j = 0;
+            
+            Console.WriteLine("BitLength: {0} bits", bit);
+            foreach (Task<BigInteger> t in tasks)
+            {
+                if (j != 0) Console.WriteLine();
+                Console.WriteLine("{0}: {1}", j+1, t.Result);
+                j++;
+            }
+            sw.Stop();
+            Console.WriteLine("Time to Generate: {0}", sw.Elapsed);
         }
+        
+        
+        static async Task<BigInteger> FindPrimeAsync(int bits)
+        {
+            
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="bits"></param>
+        /// <returns></returns>
+        static async Task<BigInteger> GenerateRandomInt(int bits)
+        {
+            RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+            byte[] somebyte = new byte[bits/8];
+            rng.GetBytes(somebyte);
+            return new BigInteger(somebyte);
+        }
+        
         /// <summary>
         /// Method responsible for checking if the BigInteger is prime
         /// </summary>
         /// <param name="source">BigInteger to be checked for prime</param>
         /// <param name="certainty">int representing the amount of times to check for the BigInteger (default 10)</param>
         /// <returns>bool representing if source is prime</returns>
-        public static bool IsProbablePrime(BigInteger source, int certainty=10)
+        static bool IsProbablePrime(BigInteger source, int certainty=10)
         {
             if(source == 2 || source == 3)
                 return true;
